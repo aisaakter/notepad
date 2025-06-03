@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GitHub Notepad</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+    }
+    header {
+      background-color: #333;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    textarea {
+      width: 100%;
+      height: calc(100vh - 50px);
+      padding: 20px;
+      font-size: 16px;
+      border: none;
+      outline: none;
+      box-sizing: border-box;
+      resize: none;
+    }
+    button {
+      margin-left: 10px;
+      padding: 5px 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>📝 GitHub Notepad</div>
+  <div>
+    <button onclick="saveToGitHub()">💾 Save to GitHub</button>
+  </div>
+</header>
+
+<textarea id="editor" placeholder="Write something..."></textarea>
+
+<script>
+  // 🔐 তোমার GitHub তথ্য এখানে বসাও
+  const GITHUB_USERNAME = 'your-username';
+  const REPO_NAME = 'your-repo';
+  const FILE_PATH = 'note.txt';  // কোন নামে সেভ হবে
+  const TOKEN = 'ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXX';  // ⚠️ নিরাপদে রেখো
+
+  async function saveToGitHub() {
+    const content = document.getElementById('editor').value;
+    const base64Content = btoa(unescape(encodeURIComponent(content)));
+
+    const apiURL = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`;
+
+    // আগে চেক করবো ফাইল আছে কিনা
+    let sha = "";
+    try {
+      const getRes = await fetch(apiURL, {
+        headers: {
+          Authorization: `token ${TOKEN}`
+        }
+      });
+      if (getRes.ok) {
+        const data = await getRes.json();
+        sha = data.sha;
+      }
+    } catch (e) {
+      console.error("Error checking file:", e);
+    }
+
+    const response = await fetch(apiURL, {
+      method: "PUT",
+      headers: {
+        Authorization: `token ${TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: "Update note from Notepad App",
+        content: base64Content,
+        sha: sha || undefined
+      })
+    });
+
+    if (response.ok) {
+      alert("✅ Saved to GitHub!");
+    } else {
+      alert("❌ Failed to save. See console for details.");
+      console.error(await response.json());
+    }
+  }
+</script>
+
+</body>
+</html>
